@@ -277,12 +277,13 @@
         <div class="footer">
             <p><strong>Data Sources & Verification Status:</strong></p>
             <ul style="margin: 10px 0; line-height: 1.8;">
-                <li><strong>United States</strong> <span class="verification-status verified">VERIFIED</span> - IRS Revenue Procedure 2025-32 (2026 tax year)</li>
-                <li><strong>United Kingdom</strong> <span class="verification-status verified">VERIFIED</span> - GOV.UK Official Tax Rates 2025-2026</li>
-                <li><strong>Canada</strong> <span class="verification-status verified">VERIFIED</span> - CRA 2026 Federal Tax Brackets</li>
-                <li><strong>Australia</strong> <span class="verification-status verified">VERIFIED</span> - ATO 2025-26 Resident Tax Rates</li>
-                <li><strong>Singapore</strong> <span class="verification-status verified">VERIFIED</span> - IRAS 2026 Tax Rates</li>
-                <li><strong>Other Countries</strong> <span class="verification-status estimated">ESTIMATES</span> - Based on publicly available data, may be outdated</li>
+                <li><strong>United States</strong> <span class="verification-status verified">VERIFIED</span> - IRS Rev. Proc. 2025-32 (OBBBA), 2026 tax year</li>
+                <li><strong>United Kingdom</strong> <span class="verification-status verified">VERIFIED</span> - GOV.UK 2025-26 rates &amp; NI thresholds</li>
+                <li><strong>Canada</strong> <span class="verification-status verified">VERIFIED</span> - CRA 2026 federal brackets (14% lowest rate)</li>
+                <li><strong>Australia</strong> <span class="verification-status verified">VERIFIED</span> - ATO 2025-26 Stage 3 tax cuts</li>
+                <li><strong>Singapore</strong> <span class="verification-status verified">VERIFIED</span> - IRAS YA2026 &amp; CPF Board 2026 rates</li>
+                <li><strong>UAE, Monaco, Cayman</strong> <span class="verification-status verified">VERIFIED</span> - Confirmed zero personal income tax</li>
+                <li><strong>Other Countries</strong> <span class="verification-status estimated">ESTIMATES</span> - Updated from PwC Tax Summaries, official gazettes &amp; government sources</li>
             </ul>
             
             <div class="maintenance-notice">
@@ -320,28 +321,32 @@
         
         const TAX_DATA = {
             'United States': {
+                // IRS Rev. Proc. 2025-32 (OBBBA). Single filer brackets on GROSS income
+                // (thresholds = standard deduction $16,100 + IRS taxable income thresholds)
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 12400, rate: 0.10},
-                    {threshold: 50400, rate: 0.12},
-                    {threshold: 105700, rate: 0.22},
-                    {threshold: 201775, rate: 0.24},
-                    {threshold: 256225, rate: 0.32},
-                    {threshold: 640600, rate: 0.35},
-                    {threshold: Infinity, rate: 0.37}
+                    {threshold: 16100, rate: 0.10},
+                    {threshold: 28500, rate: 0.12},
+                    {threshold: 66500, rate: 0.22},
+                    {threshold: 121800, rate: 0.24},
+                    {threshold: 217875, rate: 0.32},
+                    {threshold: 272325, rate: 0.35},
+                    {threshold: 656700, rate: 0.37}
                 ],
                 socialInsurance: {
                     rate: 0.0765,
-                    cap: 160200,
-                    additionalAbove: 0.0235
+                    cap: 184500,
+                    additionalAbove: 0.0145
                 },
                 currency: 'USD',
                 verified: true,
                 source: 'https://www.irs.gov/pub/irs-drop/rp-25-32.pdf',
-                notes: 'Single filer, standard deduction. Includes FICA (Social Security + Medicare). Does not include state/local taxes.'
+                notes: 'Single filer, standard deduction $16,100. FICA: SS 6.2% (cap $184,500) + Medicare 1.45%. Excl. state/local taxes.',
+                justification: 'IRS Rev. Proc. 2025-32 (OBBBA). Single filer, std. deduction $16,100. SS cap $184,500.'
             },
-            
+
             'United Kingdom': {
+                // GOV.UK 2025-26 tax year. Thresholds are gross income levels.
                 brackets: [
                     {threshold: 0, rate: 0},
                     {threshold: 12570, rate: 0.20},
@@ -356,17 +361,20 @@
                 currency: 'GBP',
                 verified: true,
                 source: 'https://www.gov.uk/income-tax-rates',
-                notes: 'Includes National Insurance (employee). Personal allowance reduces £1 per £2 earned above £100k.'
+                notes: 'Includes NI (employee 8%/2%). Personal allowance £12,570 tapers £1:£2 above £100k.',
+                justification: 'GOV.UK 2025-26 rates. Personal allowance £12,570. NI Class 1: 8%/2%.'
             },
-            
+
             'Canada': {
+                // CRA 2026 federal rates. Thresholds = BPA $16,452 + CRA taxable income thresholds.
+                // Lowest bracket reduced from 15% to 14% per May 2025 legislation.
                 brackets: [
                     {threshold: 0, rate: 0},
                     {threshold: 16452, rate: 0.14},
-                    {threshold: 58523, rate: 0.205},
-                    {threshold: 117045, rate: 0.26},
-                    {threshold: 181440, rate: 0.29},
-                    {threshold: 258482, rate: 0.33}
+                    {threshold: 74975, rate: 0.205},
+                    {threshold: 133497, rate: 0.26},
+                    {threshold: 197892, rate: 0.29},
+                    {threshold: 274934, rate: 0.33}
                 ],
                 socialInsurance: {
                     rate: 0.0595,
@@ -377,10 +385,12 @@
                 currency: 'CAD',
                 verified: true,
                 source: 'https://www.canada.ca/en/revenue-agency/services/tax/individuals/frequently-asked-questions-individuals/canadian-income-tax-rates-individuals-current-previous-years.html',
-                notes: 'Federal only, does not include provincial tax. CPP contributions shown. Add ~5-20% for provincial tax depending on province.'
+                notes: 'Federal only. BPA $16,452. CPP 5.95% (cap $74,600) + CPP2 4% ($74,600-$85,000). Excl. provincial tax (+5-20%).',
+                justification: 'CRA 2026 federal rates. 14% lowest bracket (May 2025 law). BPA $16,452. CPP/CPP2 included.'
             },
-            
+
             'Australia': {
+                // ATO 2025-26. Stage 3 tax cuts effective 1 Jul 2024.
                 brackets: [
                     {threshold: 0, rate: 0},
                     {threshold: 18200, rate: 0.16},
@@ -395,10 +405,12 @@
                 currency: 'AUD',
                 verified: true,
                 source: 'https://www.ato.gov.au/tax-rates-and-codes/tax-rates-australian-residents',
-                notes: 'Includes 2% Medicare levy. Tax-free threshold is $18,200.'
+                notes: 'Stage 3 tax cuts (from 1 Jul 2024): 16%, 30%, 37%, 45%. Medicare levy 2%. Tax-free threshold $18,200.',
+                justification: 'ATO 2025-26 rates. Stage 3 cuts: 16%/30%/37%/45%. Medicare levy 2%.'
             },
-            
+
             'Singapore': {
+                // IRAS YA2026 rates (from YA2024: added 23%/24% top brackets).
                 brackets: [
                     {threshold: 0, rate: 0},
                     {threshold: 20000, rate: 0.02},
@@ -421,9 +433,10 @@
                 currency: 'SGD',
                 verified: true,
                 source: 'https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates',
-                notes: 'Tax resident rates. CPF (employee + employer 20% shown) capped at S$102k income.'
+                notes: 'Tax resident rates. CPF employee contribution 20% (cap S$102k annual). OW ceiling S$8,000/mo from Jan 2026.',
+                justification: 'IRAS YA2026 rates. CPF employee 20% (annual cap S$102k, OW ceiling S$8k/mo from 2026).'
             },
-            
+
             'UAE (Dubai)': {
                 brackets: [
                     {threshold: 0, rate: 0}
@@ -433,11 +446,12 @@
                     cap: 0
                 },
                 currency: 'USD',
-                verified: false,
-                source: 'General knowledge - no personal income tax in UAE',
-                notes: 'No personal income tax. May have pension contributions for UAE nationals (not shown).'
+                verified: true,
+                source: 'https://taxsummaries.pwc.com/united-arab-emirates/individual/taxes-on-personal-income',
+                notes: 'No personal income tax. Corporate tax 9% (from Jun 2023) does not apply to individuals.',
+                justification: 'No personal income tax in UAE. Confirmed by UAE Ministry of Economy.'
             },
-            
+
             'Monaco': {
                 brackets: [
                     {threshold: 0, rate: 0}
@@ -447,11 +461,12 @@
                     cap: 0
                 },
                 currency: 'EUR',
-                verified: false,
-                source: 'General knowledge - no personal income tax in Monaco',
-                notes: 'No personal income tax for residents (except French nationals).'
+                verified: true,
+                source: 'https://monservicepublic.gouv.mc/en/themes/tax/information/general-information/tax-in-monaco',
+                notes: 'No personal income tax since 1869. Exception: French nationals (1963 Convention) pay French rates.',
+                justification: 'No income tax since 1869. French nationals taxed under 1963 Franco-Monegasque Convention.'
             },
-            
+
             'Cayman Islands': {
                 brackets: [
                     {threshold: 0, rate: 0}
@@ -461,69 +476,79 @@
                     cap: 0
                 },
                 currency: 'USD',
-                verified: false,
-                source: 'General knowledge - no personal income tax',
-                notes: 'No personal income tax, no capital gains tax.'
+                verified: true,
+                source: 'https://taxsummaries.pwc.com/cayman-islands/individual/taxes-on-personal-income',
+                notes: 'No income tax, capital gains tax, or corporate tax. Revenue from import duties and fees.',
+                justification: 'Zero tax jurisdiction. No income, capital gains, or corporate tax. Head tax abolished 1985.'
             },
-            
+
             'Germany': {
+                // 2026 Steuerfortentwicklungsgesetz. Formula-based zones approximated as stepped brackets.
+                // Grundfreibetrag €12,348. Progressive zones 14%-42% approximated.
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 11604, rate: 0.14},
-                    {threshold: 17005, rate: 0.24},
-                    {threshold: 66761, rate: 0.42},
+                    {threshold: 12348, rate: 0.14},
+                    {threshold: 17799, rate: 0.24},
+                    {threshold: 69878, rate: 0.42},
                     {threshold: 277826, rate: 0.45}
                 ],
                 socialInsurance: {
-                    rate: 0.20,
-                    cap: 90600
+                    rate: 0.21,
+                    cap: 101400
                 },
                 currency: 'EUR',
                 verified: false,
-                source: 'Estimate - verify at https://www.bundesfinanzministerium.de/',
-                notes: 'ESTIMATE. Includes approximate social insurance (pension, health, unemployment). Rates may vary.'
+                source: 'https://taxsummaries.pwc.com/germany/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. §32a EStG 2026 (formula-based, approximated). Social ins. ~21% employee (pension 9.3%, health ~8.75%, unemployment 1.3%, care 1.8%). Caps vary by type.',
+                justification: 'Est. 2026 §32a EStG. Grundfreibetrag €12,348. Social ins. ~21% employee. Caps: pension €101k, health €70k.'
             },
-            
+
             'France': {
+                // 2026 barème (single person, 1 part). Thresholds +0.9% inflation vs 2025.
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 11294, rate: 0.11},
-                    {threshold: 28797, rate: 0.30},
-                    {threshold: 82341, rate: 0.41},
-                    {threshold: 177106, rate: 0.45}
+                    {threshold: 11600, rate: 0.11},
+                    {threshold: 29579, rate: 0.30},
+                    {threshold: 83988, rate: 0.41},
+                    {threshold: 180648, rate: 0.45}
                 ],
                 socialInsurance: {
                     rate: 0.22,
-                    cap: 43992
+                    cap: 48060
                 },
                 currency: 'EUR',
                 verified: false,
-                source: 'Estimate - verify at https://www.impots.gouv.fr/',
-                notes: 'ESTIMATE. Social charges (CSG/CRDS) ~9.2% + employee social security shown. Quotient familial not modeled.'
+                source: 'https://taxsummaries.pwc.com/france/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. 2026 barème, single, 1 part. CSG/CRDS ~9.7% + employee social ~12%. Quotient familial not modeled.',
+                justification: 'Est. 2026 barème (1 part). Thresholds +0.9% inflation. CSG/CRDS 9.7% + social ~12%.'
             },
-            
+
             'Japan': {
+                // NTA national brackets. Basic deduction ¥580k + employment deduction ¥650k = ¥1.23M modeled as 0% zone.
+                // Does NOT include ~10% resident tax or 2.1% reconstruction surtax.
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 1950000, rate: 0.05},
-                    {threshold: 3300000, rate: 0.10},
-                    {threshold: 6950000, rate: 0.20},
-                    {threshold: 9000000, rate: 0.23},
-                    {threshold: 18000000, rate: 0.33},
-                    {threshold: 40000000, rate: 0.40},
-                    {threshold: Infinity, rate: 0.45}
+                    {threshold: 1230000, rate: 0.05},
+                    {threshold: 3180000, rate: 0.10},
+                    {threshold: 4530000, rate: 0.20},
+                    {threshold: 8180000, rate: 0.23},
+                    {threshold: 10230000, rate: 0.33},
+                    {threshold: 19230000, rate: 0.40},
+                    {threshold: 41230000, rate: 0.45}
                 ],
                 socialInsurance: {
                     rate: 0.15,
-                    cap: 6500000
+                    cap: 7800000
                 },
                 currency: 'JPY',
                 verified: false,
-                source: 'Estimate - verify at https://www.nta.go.jp/',
-                notes: 'ESTIMATE. Does not include resident tax (~10%) or actual social insurance rates which vary. Numbers are approximate.'
+                source: 'https://taxsummaries.pwc.com/japan/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. National tax only. Excl. ~10% resident tax and 2.1% reconstruction surtax. Basic+employment deductions ~¥1.23M. Social ins. ~15%.',
+                justification: 'Est. NTA brackets. Deductions ~¥1.23M. Excl. ~10% resident tax, 2.1% surtax. SI ~15%.'
             },
-            
+
             'Thailand': {
+                // Revenue Dept. brackets (unchanged since 2013). Thresholds on net taxable income.
                 brackets: [
                     {threshold: 0, rate: 0},
                     {threshold: 150000, rate: 0.05},
@@ -532,49 +557,54 @@
                     {threshold: 750000, rate: 0.20},
                     {threshold: 1000000, rate: 0.25},
                     {threshold: 2000000, rate: 0.30},
-                    {threshold: 4000000, rate: 0.35}
+                    {threshold: 5000000, rate: 0.35}
                 ],
                 socialInsurance: {
                     rate: 0.05,
-                    cap: 900000
+                    cap: 210000
                 },
                 currency: 'THB',
                 verified: false,
-                source: 'Estimate - verify at Thai Revenue Department',
-                notes: 'ESTIMATE. Remittance-based taxation for certain income. Social security capped at 15,000 THB/month.'
+                source: 'https://taxsummaries.pwc.com/thailand/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. Revenue Dept. brackets (unchanged since 2013). SS 5% capped ฿17,500/mo (2026, up from ฿15,000).',
+                justification: 'Est. Revenue Dept. rates (since 2013). SS 5% cap ฿17,500/mo (2026 per Royal Gazette Dec 2025).'
             },
-            
+
             'Vietnam': {
+                // NEW PIT Law No. 109/2025/QH15 (eff. 1 Jan 2026): reduced from 7 to 5 brackets.
+                // Personal deduction ₫15.5M/mo = ₫186M/yr. Thresholds = deduction + taxable income thresholds.
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 60000000, rate: 0.05},
-                    {threshold: 120000000, rate: 0.10},
-                    {threshold: 216000000, rate: 0.15},
-                    {threshold: 384000000, rate: 0.20},
-                    {threshold: 624000000, rate: 0.25}
+                    {threshold: 186000000, rate: 0.05},
+                    {threshold: 306000000, rate: 0.15},
+                    {threshold: 486000000, rate: 0.25},
+                    {threshold: 786000000, rate: 0.30},
+                    {threshold: 1386000000, rate: 0.35}
                 ],
                 socialInsurance: {
                     rate: 0.105,
-                    cap: 448800000
+                    cap: 561600000
                 },
                 currency: 'VND',
                 verified: false,
-                source: 'Estimate based on 2026 law - verify current rates',
-                notes: 'ESTIMATE. 2026 law reduced from 7 to 5 brackets. Social insurance ~10.5% (employee portion).'
+                source: 'https://www.vietnam-briefing.com/news/vietnams-personal-income-tax-law.html/',
+                notes: 'PIT Law 109/2025/QH15 (eff. 1 Jan 2026): 5 brackets (was 7). Personal deduction ₫15.5M/mo. SI 10.5%.',
+                justification: 'New PIT Law 109/2025/QH15 (eff. 1 Jan 2026). 5 brackets. Deduction ₫15.5M/mo. SI 10.5%.'
             },
-            
+
             'Portugal': {
+                // 2025 IRS escalões (9 brackets) per Lei 55-A/2025.
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 7703, rate: 0.145},
-                    {threshold: 11623, rate: 0.21},
-                    {threshold: 16472, rate: 0.265},
-                    {threshold: 21321, rate: 0.285},
-                    {threshold: 27146, rate: 0.35},
-                    {threshold: 39791, rate: 0.37},
-                    {threshold: 51997, rate: 0.435},
-                    {threshold: 81199, rate: 0.45},
-                    {threshold: Infinity, rate: 0.48}
+                    {threshold: 8059, rate: 0.125},
+                    {threshold: 12160, rate: 0.16},
+                    {threshold: 17233, rate: 0.215},
+                    {threshold: 22306, rate: 0.244},
+                    {threshold: 28400, rate: 0.314},
+                    {threshold: 41629, rate: 0.349},
+                    {threshold: 44987, rate: 0.431},
+                    {threshold: 83696, rate: 0.446},
+                    {threshold: 83697, rate: 0.48}
                 ],
                 socialInsurance: {
                     rate: 0.11,
@@ -582,51 +612,56 @@
                 },
                 currency: 'EUR',
                 verified: false,
-                source: 'Estimate - verify at https://info.portaldasfinancas.gov.pt/',
-                notes: 'ESTIMATE. Does not model NHR (Non-Habitual Resident) regime. Social security employee contribution shown.'
+                source: 'https://taxsummaries.pwc.com/portugal/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. 2025 IRS escalões (9 brackets). Does not model NHR regime. SS employee 11% (no cap). +2.5-5% solidarity surcharge above €80k.',
+                justification: 'Est. 2025 IRS escalões per Lei 55-A/2025. 9 brackets 12.5%-48%. SS 11% no cap.'
             },
-            
+
             'Mexico': {
+                // 2026 ISR tarifa (Anexo 8 RMF 2026, published DOF 28 Dec 2025).
+                // Thresholds inflated +13.21% from 2022 values. No 0% bracket (lowest is 1.92%).
                 brackets: [
-                    {threshold: 0, rate: 0},
-                    {threshold: 7735.00, rate: 0.0192},
-                    {threshold: 65651.07, rate: 0.064},
-                    {threshold: 115375.90, rate: 0.1088},
-                    {threshold: 134119.41, rate: 0.16},
-                    {threshold: 160577.65, rate: 0.1792},
-                    {threshold: 323862.00, rate: 0.2136},
-                    {threshold: 510451.00, rate: 0.2352},
-                    {threshold: 974535.03, rate: 0.30},
-                    {threshold: 1299380.04, rate: 0.32},
-                    {threshold: 3898140.12, rate: 0.34},
-                    {threshold: Infinity, rate: 0.35}
+                    {threshold: 0, rate: 0.0192},
+                    {threshold: 10135, rate: 0.064},
+                    {threshold: 86022, rate: 0.1088},
+                    {threshold: 151176, rate: 0.16},
+                    {threshold: 175736, rate: 0.1792},
+                    {threshold: 210404, rate: 0.2136},
+                    {threshold: 424354, rate: 0.2352},
+                    {threshold: 668840, rate: 0.30},
+                    {threshold: 1276926, rate: 0.32},
+                    {threshold: 1702568, rate: 0.34},
+                    {threshold: 5107704, rate: 0.35}
                 ],
                 socialInsurance: {
-                    rate: 0.0425,
-                    cap: 1605000
+                    rate: 0.028,
+                    cap: 1070456
                 },
                 currency: 'MXN',
                 verified: false,
-                source: 'Estimate - verify at https://www.sat.gob.mx/',
-                notes: 'ESTIMATE. IMSS (social security) employee portion shown. Actual rates vary by income bracket.'
+                source: 'https://taxsummaries.pwc.com/mexico/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. 2026 ISR tarifa (+13.21% inflation adj.). IMSS employee ~2.8%. Subsidio al empleo not modeled.',
+                justification: 'Est. 2026 ISR tarifa (Anexo 8 RMF 2026, +13.21% inflation). IMSS employee ~2.8%.'
             },
-            
+
             'Costa Rica': {
+                // 2026 per Decreto 45333-H (Dec 2025). Monthly thresholds annualized.
                 brackets: [
                     {threshold: 0, rate: 0},
-                    {threshold: 5457000, rate: 0.10},
-                    {threshold: 8143000, rate: 0.15},
-                    {threshold: 13572000, rate: 0.20},
-                    {threshold: Infinity, rate: 0.25}
+                    {threshold: 11016000, rate: 0.10},
+                    {threshold: 16164000, rate: 0.15},
+                    {threshold: 28368000, rate: 0.20},
+                    {threshold: 56724000, rate: 0.25}
                 ],
                 socialInsurance: {
-                    rate: 0.1067,
+                    rate: 0.1083,
                     cap: Infinity
                 },
                 currency: 'CRC',
                 verified: false,
-                source: 'Estimate - verify at Ministerio de Hacienda',
-                notes: 'ESTIMATE. CCSS (social security) and other deductions ~10.67% employee portion.'
+                source: 'https://www.bdo.cr/en-gb/insights/2025/new-income-brackets-for-2026',
+                notes: 'ESTIMATE. 2026 per Decreto 45333-H. CCSS employee 10.83% (IVM +0.16% from 2025). No cap.',
+                justification: 'Est. 2026 Decreto 45333-H. CCSS 10.83% (IVM pension rate +0.16% from 2025).'
             }
         };
 
@@ -639,27 +674,17 @@
         function calculateTax(income, countryData) {
             let tax = 0;
             const brackets = countryData.brackets;
-            
-            for (let i = 0; i < brackets.length - 1; i++) {
-                const currentBracket = brackets[i];
-                const nextBracket = brackets[i + 1];
-                
-                if (income > nextBracket.threshold) {
-                    const taxableInBracket = nextBracket.threshold - currentBracket.threshold;
-                    tax += taxableInBracket * nextBracket.rate;
-                } else if (income > currentBracket.threshold) {
-                    const taxableInBracket = income - currentBracket.threshold;
-                    tax += taxableInBracket * nextBracket.rate;
-                    break;
+
+            for (let i = 0; i < brackets.length; i++) {
+                const bracket = brackets[i];
+                const nextThreshold = (i < brackets.length - 1) ? brackets[i + 1].threshold : Infinity;
+
+                if (income > bracket.threshold) {
+                    const taxableInBracket = Math.min(income, nextThreshold) - bracket.threshold;
+                    tax += taxableInBracket * bracket.rate;
                 }
             }
-            
-            // Check if there's a final bracket with Infinity threshold
-            if (brackets[brackets.length - 1].threshold !== Infinity && income > brackets[brackets.length - 1].threshold) {
-                const lastBracket = brackets[brackets.length - 1];
-                tax += (income - lastBracket.threshold) * lastBracket.rate;
-            }
-            
+
             return tax;
         }
         
@@ -713,7 +738,8 @@
                     takeHome,
                     effectiveRate: effectiveRate || 0,
                     currency: data.currency,
-                    verified: data.verified
+                    verified: data.verified,
+                    justification: data.justification || ''
                 });
             }
             
@@ -735,16 +761,32 @@
                         width: 2
                     }
                 },
-                text: results.map(r => 
+                text: results.map(r =>
                     `$${r.takeHomeUSD.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}<br>` +
                     `${r.effectiveRate.toFixed(1)}% effective tax`
                 ),
                 textposition: 'none',
+                customdata: results.map(r => {
+                    const incomeTaxUSD = r.incomeTax / EXCHANGE_RATES[r.currency];
+                    const socialInsUSD = r.socialInsurance / EXCHANGE_RATES[r.currency];
+                    const incomeTaxPct = r.localIncome > 0 ? (r.incomeTax / r.localIncome * 100).toFixed(1) : '0.0';
+                    const socialInsPct = r.localIncome > 0 ? (r.socialInsurance / r.localIncome * 100).toFixed(1) : '0.0';
+                    return [
+                        r.effectiveRate.toFixed(1),
+                        '$' + Math.round(incomeTaxUSD).toLocaleString('en-US'),
+                        incomeTaxPct,
+                        '$' + Math.round(socialInsUSD).toLocaleString('en-US'),
+                        socialInsPct,
+                        r.justification
+                    ];
+                }),
                 hovertemplate: '<b>%{x}</b><br>' +
                     'Take-Home: $%{y:,.0f} USD<br>' +
-                    'Effective Tax Rate: %{text}<br>' +
-                    '<extra></extra>',
-                customdata: results.map(r => r.effectiveRate.toFixed(1) + '%')
+                    'Income Tax: %{customdata[1]} USD (%{customdata[2]}%)<br>' +
+                    'Social Insurance: %{customdata[3]} USD (%{customdata[4]}%)<br>' +
+                    'Effective Rate: %{customdata[0]}%<br>' +
+                    '<br><i>%{customdata[5]}</i>' +
+                    '<extra></extra>'
             };
             
             const layout = {
