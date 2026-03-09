@@ -386,6 +386,22 @@
                 <button onclick="deselectAllCountries()">Deselect All</button>
             </div>
             <div class="country-checkboxes" id="countryCheckboxes"></div>
+            <div style="margin-top:15px;display:flex;gap:20px;align-items:end;flex-wrap:wrap;">
+                <div class="input-group" style="margin-bottom:0;flex:1;min-width:180px;">
+                    <label for="rangeMin" style="font-size:0.85rem;">Income Range Min (USD)</label>
+                    <div class="input-wrapper">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" id="rangeMin" value="10000" min="0" max="100000000" step="10000">
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom:0;flex:1;min-width:180px;">
+                    <label for="rangeMax" style="font-size:0.85rem;">Income Range Max (USD)</label>
+                    <div class="input-wrapper">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" id="rangeMax" value="2000000" min="0" max="100000000" step="10000">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="chart-container">
@@ -917,7 +933,7 @@
             results.sort((a, b) => b.takeHomeUSD - a.takeHomeUSD);
 
             updateBarChart(results);
-            updateResults(results);
+            document.getElementById('results').innerHTML = '';
         }
 
         function updateBarChart(results) {
@@ -991,11 +1007,16 @@
         }
 
         function updateCompoundingChart() {
-            // Generate income points from $10k to $2M
+            const rangeMin = Math.max(0, parseFloat(document.getElementById('rangeMin').value) || 0);
+            const rangeMax = Math.max(rangeMin + 1000, parseFloat(document.getElementById('rangeMax').value) || 2000000);
+            const range = rangeMax - rangeMin;
+
+            // Generate ~50 evenly spaced points across the user's range
+            const numPoints = 50;
+            const step = Math.max(1000, Math.round(range / numPoints / 1000) * 1000);
             const incomePoints = [];
-            for (let i = 10000; i <= 100000; i += 10000) incomePoints.push(i);
-            for (let i = 150000; i <= 500000; i += 50000) incomePoints.push(i);
-            for (let i = 600000; i <= 2000000; i += 100000) incomePoints.push(i);
+            for (let i = rangeMin; i <= rangeMax; i += step) incomePoints.push(i);
+            if (incomePoints[incomePoints.length - 1] < rangeMax) incomePoints.push(rangeMax);
 
             const traces = [];
             const countries = Object.keys(TAX_DATA);
@@ -1031,12 +1052,12 @@
                 xaxis: {
                     title: 'Annual Gross Income (USD)',
                     tickformat: '$,.0f',
-                    type: currentScale
+                    type: 'linear'
                 },
                 yaxis: {
                     title: 'Annual Take-Home Income (USD)',
                     tickformat: '$,.0f',
-                    type: currentScale
+                    type: 'linear'
                 },
                 plot_bgcolor: '#f9fafb',
                 paper_bgcolor: 'white',
@@ -1066,31 +1087,6 @@
                 'Countries with flatter curves retain more income at higher earnings — ideal for wealth compounding.</p>';
         }
 
-        function updateResults(results) {
-            const resultsDiv = document.getElementById('results');
-            const incomeUSD = parseFloat(document.getElementById('income').value) || 0;
-
-            let html = '<h2>Sample Calculations at $' + incomeUSD.toLocaleString('en-US', {minimumFractionDigits: 0}) + ' USD</h2>';
-            html += '<div class="results-grid">';
-
-            for (let i = 0; i < Math.min(3, results.length); i++) {
-                const r = results[i];
-                const status = r.verified ?
-                    '<span class="verification-status verified">VERIFIED</span>' :
-                    '<span class="verification-status estimated">ESTIMATE</span>';
-
-                html += `
-                    <div class="result-card">
-                        <h3>#${i + 1} ${r.country} ${status}</h3>
-                        <div class="value">$${r.takeHomeUSD.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</div>
-                        <div class="subtext">${r.effectiveRate.toFixed(1)}% effective tax rate</div>
-                    </div>
-                `;
-            }
-
-            html += '</div>';
-            resultsDiv.innerHTML = html;
-        }
 
         function setScale(scale) {
             currentScale = scale;
@@ -1166,6 +1162,12 @@
         // Initialize
         initCountrySelector();
         document.getElementById('income').addEventListener('input', calculateResults);
+        document.getElementById('rangeMin').addEventListener('input', function() {
+            if (currentView === 'compounding') updateCompoundingChart();
+        });
+        document.getElementById('rangeMax').addEventListener('input', function() {
+            if (currentView === 'compounding') updateCompoundingChart();
+        });
         calculateResults();
     </script>
 </body>
