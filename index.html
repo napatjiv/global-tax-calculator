@@ -236,13 +236,119 @@
             border-radius: 4px;
             font-size: 0.8rem;
         }
+
+        .view-toggle {
+            display: flex;
+            gap: 0;
+            margin: 0 30px 0 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .view-toggle button {
+            padding: 14px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #6b7280;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .view-toggle button:hover {
+            color: #374151;
+        }
+
+        .view-toggle button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .country-selector {
+            padding: 15px 30px;
+            display: none;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .country-selector.visible {
+            display: block;
+        }
+
+        .country-selector h3 {
+            font-size: 0.95rem;
+            color: #374151;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .country-selector .selector-actions {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .country-selector .selector-actions button {
+            padding: 4px 12px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #374151;
+        }
+
+        .country-selector .selector-actions button:hover {
+            background: #f3f4f6;
+        }
+
+        .country-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .country-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .country-chip:hover {
+            border-color: #93c5fd;
+        }
+
+        .country-chip.selected {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .country-chip input {
+            display: none;
+        }
+
+        .country-chip .chip-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🌍 Global Take-Home Income Calculator</h1>
-            <p>Compare after-tax income across 16 countries • Up to $1 trillion</p>
+            <p>Compare after-tax income across 17 countries/regions • Up to $1 trillion</p>
         </div>
         
         <div class="disclaimer">
@@ -268,6 +374,20 @@
             </div>
         </div>
         
+        <div class="view-toggle">
+            <button class="active" onclick="setView('single')">Single Income Comparison</button>
+            <button onclick="setView('compounding')">Income vs. Take-Home (Multi-Country)</button>
+        </div>
+
+        <div class="country-selector" id="countrySelector">
+            <h3>Select countries to compare:</h3>
+            <div class="selector-actions">
+                <button onclick="selectAllCountries()">Select All</button>
+                <button onclick="deselectAllCountries()">Deselect All</button>
+            </div>
+            <div class="country-checkboxes" id="countryCheckboxes"></div>
+        </div>
+
         <div class="chart-container">
             <div id="chart"></div>
         </div>
@@ -277,7 +397,8 @@
         <div class="footer">
             <p><strong>Data Sources & Verification Status:</strong></p>
             <ul style="margin: 10px 0; line-height: 1.8;">
-                <li><strong>United States</strong> <span class="verification-status verified">VERIFIED</span> - IRS Rev. Proc. 2025-32 (OBBBA), 2026 tax year</li>
+                <li><strong>USA (Texas)</strong> <span class="verification-status verified">VERIFIED</span> - IRS Rev. Proc. 2025-32, federal only (TX 0% state tax)</li>
+                <li><strong>USA (California)</strong> <span class="verification-status verified">VERIFIED</span> - IRS Rev. Proc. 2025-32 + CA FTB rates (up to 13.3%)</li>
                 <li><strong>United Kingdom</strong> <span class="verification-status verified">VERIFIED</span> - GOV.UK 2025-26 rates &amp; NI thresholds</li>
                 <li><strong>Canada</strong> <span class="verification-status verified">VERIFIED</span> - CRA 2026 federal brackets (14% lowest rate)</li>
                 <li><strong>Australia</strong> <span class="verification-status verified">VERIFIED</span> - ATO 2025-26 Stage 3 tax cuts</li>
@@ -320,9 +441,9 @@
         // - notes: important info about what's included/excluded
         
         const TAX_DATA = {
-            'United States': {
-                // IRS Rev. Proc. 2025-32 (OBBBA). Single filer brackets on GROSS income
-                // (thresholds = standard deduction $16,100 + IRS taxable income thresholds)
+            'USA (Texas - No State Tax)': {
+                // IRS Rev. Proc. 2025-32 (OBBBA). Single filer brackets on GROSS income.
+                // Texas has NO state income tax.
                 brackets: [
                     {threshold: 0, rate: 0},
                     {threshold: 16100, rate: 0.10},
@@ -341,8 +462,36 @@
                 currency: 'USD',
                 verified: true,
                 source: 'https://www.irs.gov/pub/irs-drop/rp-25-32.pdf',
-                notes: 'Single filer, standard deduction $16,100. FICA: SS 6.2% (cap $184,500) + Medicare 1.45%. Excl. state/local taxes.',
-                justification: 'IRS Rev. Proc. 2025-32 (OBBBA). Single filer, std. deduction $16,100. SS cap $184,500.'
+                notes: 'Federal only (Texas has 0% state income tax). Single filer, standard deduction $16,100. FICA: SS 6.2% (cap $184,500) + Medicare 1.45%.',
+                justification: 'IRS federal + Texas (0% state tax). Low-tax US scenario.'
+            },
+
+            'USA (California - Highest Tax)': {
+                // IRS federal brackets + California state tax (2025-26, 9 brackets up to 13.3%).
+                // Combined brackets approximate federal+state marginal rates on gross income.
+                // CA standard deduction ~$5,540 (single). Modeled by adding CA rates on top of federal.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 16100, rate: 0.11},      // 10% fed + ~1% CA
+                    {threshold: 28500, rate: 0.14},       // 12% fed + ~2% CA
+                    {threshold: 66500, rate: 0.26},       // 22% fed + ~4% CA
+                    {threshold: 121800, rate: 0.30},      // 24% fed + ~6% CA
+                    {threshold: 217875, rate: 0.4125},    // 32% fed + ~9.3% CA
+                    {threshold: 272325, rate: 0.4425},    // 35% fed + ~9.3% CA
+                    {threshold: 656700, rate: 0.4630},    // 37% fed + ~9.3% CA
+                    {threshold: 1000000, rate: 0.5030}    // 37% fed + 13.3% CA (mental health surtax)
+                ],
+                socialInsurance: {
+                    rate: 0.0765,
+                    cap: 184500,
+                    additionalAbove: 0.0145
+                },
+                stateTax: true,
+                currency: 'USD',
+                verified: true,
+                source: 'https://www.ftb.ca.gov/forms/2025/2025-california-tax-rate-schedules.html',
+                notes: 'Federal + California state tax (up to 13.3%). Single filer. CA Mental Health Services surtax 1% above $1M. FICA included.',
+                justification: 'IRS federal + CA state tax (13.3% top rate + 1% MHS surtax). Worst-case US scenario.'
             },
 
             'United Kingdom': {
@@ -666,11 +815,21 @@
         };
 
         let currentScale = 'log';
-        
+        let currentView = 'single'; // 'single' or 'compounding'
+        let selectedCountries = new Set(Object.keys(TAX_DATA));
+
+        // Color palette for line chart
+        const LINE_COLORS = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+            '#14b8a6', '#e11d48', '#0ea5e9', '#a855f7', '#d946ef',
+            '#22c55e', '#eab308'
+        ];
+
         function convertToLocalCurrency(usdAmount, currency) {
             return usdAmount * EXCHANGE_RATES[currency];
         }
-        
+
         function calculateTax(income, countryData) {
             let tax = 0;
             const brackets = countryData.brackets;
@@ -687,13 +846,13 @@
 
             return tax;
         }
-        
+
         function calculateSocialInsurance(income, countryData) {
             const si = countryData.socialInsurance;
             if (!si || si.rate === 0) return 0;
-            
+
             let total = 0;
-            
+
             if (income <= si.cap) {
                 total = income * si.rate;
             } else {
@@ -708,15 +867,28 @@
                     }
                 }
             }
-            
+
             return total;
         }
-        
+
+        function getTakeHomeUSD(incomeUSD, countryData) {
+            const localIncome = convertToLocalCurrency(incomeUSD, countryData.currency);
+            const incomeTax = calculateTax(localIncome, countryData);
+            const socialInsurance = calculateSocialInsurance(localIncome, countryData);
+            const takeHome = localIncome - incomeTax - socialInsurance;
+            return takeHome / EXCHANGE_RATES[countryData.currency];
+        }
+
         function calculateResults() {
+            if (currentView === 'compounding') {
+                updateCompoundingChart();
+                return;
+            }
+
             const incomeUSD = parseFloat(document.getElementById('income').value) || 0;
-            
+
             const results = [];
-            
+
             for (const [country, data] of Object.entries(TAX_DATA)) {
                 const localIncome = convertToLocalCurrency(incomeUSD, data.currency);
                 const incomeTax = calculateTax(localIncome, data);
@@ -724,10 +896,9 @@
                 const totalTax = incomeTax + socialInsurance;
                 const takeHome = localIncome - totalTax;
                 const effectiveRate = (totalTax / localIncome) * 100;
-                
-                // Convert back to USD for comparison
+
                 const takeHomeUSD = takeHome / EXCHANGE_RATES[data.currency];
-                
+
                 results.push({
                     country,
                     takeHomeUSD,
@@ -742,14 +913,14 @@
                     justification: data.justification || ''
                 });
             }
-            
+
             results.sort((a, b) => b.takeHomeUSD - a.takeHomeUSD);
-            
-            updateChart(results);
+
+            updateBarChart(results);
             updateResults(results);
         }
-        
-        function updateChart(results) {
+
+        function updateBarChart(results) {
             const trace = {
                 x: results.map(r => r.country + (r.verified ? ' ✓' : '')),
                 y: results.map(r => r.takeHomeUSD),
@@ -788,7 +959,7 @@
                     '<br><i>%{customdata[5]}</i>' +
                     '<extra></extra>'
             };
-            
+
             const layout = {
                 title: {
                     text: 'After-Tax Income Comparison',
@@ -809,30 +980,105 @@
                 height: 600,
                 hovermode: 'closest'
             };
-            
+
             const config = {
                 responsive: true,
                 displayModeBar: true,
                 displaylogo: false
             };
-            
+
             Plotly.newPlot('chart', [trace], layout, config);
         }
-        
+
+        function updateCompoundingChart() {
+            // Generate income points from $10k to $2M
+            const incomePoints = [];
+            for (let i = 10000; i <= 100000; i += 10000) incomePoints.push(i);
+            for (let i = 150000; i <= 500000; i += 50000) incomePoints.push(i);
+            for (let i = 600000; i <= 2000000; i += 100000) incomePoints.push(i);
+
+            const traces = [];
+            const countries = Object.keys(TAX_DATA);
+
+            countries.forEach((country, idx) => {
+                if (!selectedCountries.has(country)) return;
+
+                const data = TAX_DATA[country];
+                const takeHomeValues = incomePoints.map(inc => getTakeHomeUSD(inc, data));
+
+                traces.push({
+                    x: incomePoints,
+                    y: takeHomeValues,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: country,
+                    line: {
+                        color: LINE_COLORS[idx % LINE_COLORS.length],
+                        width: 2.5
+                    },
+                    hovertemplate: '<b>' + country + '</b><br>' +
+                        'Gross: $%{x:,.0f}<br>' +
+                        'Take-Home: $%{y:,.0f}<br>' +
+                        '<extra></extra>'
+                });
+            });
+
+            const layout = {
+                title: {
+                    text: 'Gross Income vs. Take-Home Income by Country',
+                    font: { size: 20, color: '#1f2937' }
+                },
+                xaxis: {
+                    title: 'Annual Gross Income (USD)',
+                    tickformat: '$,.0f',
+                    type: currentScale
+                },
+                yaxis: {
+                    title: 'Annual Take-Home Income (USD)',
+                    tickformat: '$,.0f',
+                    type: currentScale
+                },
+                plot_bgcolor: '#f9fafb',
+                paper_bgcolor: 'white',
+                margin: { t: 80, b: 80, l: 100, r: 40 },
+                height: 600,
+                hovermode: 'x unified',
+                legend: {
+                    orientation: 'v',
+                    x: 1.02,
+                    y: 1,
+                    font: { size: 11 }
+                }
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false
+            };
+
+            Plotly.newPlot('chart', traces, layout, config);
+
+            // Update results area with summary
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>Income vs. Take-Home Comparison</h2>' +
+                '<p style="color:#6b7280;margin-top:8px;">Select countries above to compare how after-tax income scales with gross income. ' +
+                'Countries with flatter curves retain more income at higher earnings — ideal for wealth compounding.</p>';
+        }
+
         function updateResults(results) {
             const resultsDiv = document.getElementById('results');
             const incomeUSD = parseFloat(document.getElementById('income').value) || 0;
-            
+
             let html = '<h2>Sample Calculations at $' + incomeUSD.toLocaleString('en-US', {minimumFractionDigits: 0}) + ' USD</h2>';
             html += '<div class="results-grid">';
-            
-            // Show top 3 countries
+
             for (let i = 0; i < Math.min(3, results.length); i++) {
                 const r = results[i];
-                const status = r.verified ? 
-                    '<span class="verification-status verified">VERIFIED</span>' : 
+                const status = r.verified ?
+                    '<span class="verification-status verified">VERIFIED</span>' :
                     '<span class="verification-status estimated">ESTIMATE</span>';
-                
+
                 html += `
                     <div class="result-card">
                         <h3>#${i + 1} ${r.country} ${status}</h3>
@@ -841,11 +1087,11 @@
                     </div>
                 `;
             }
-            
+
             html += '</div>';
             resultsDiv.innerHTML = html;
         }
-        
+
         function setScale(scale) {
             currentScale = scale;
             document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -854,8 +1100,71 @@
             event.target.classList.add('active');
             calculateResults();
         }
-        
+
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            const selector = document.getElementById('countrySelector');
+            if (view === 'compounding') {
+                selector.classList.add('visible');
+            } else {
+                selector.classList.remove('visible');
+            }
+
+            calculateResults();
+        }
+
+        // Country selector
+        function initCountrySelector() {
+            const container = document.getElementById('countryCheckboxes');
+            const countries = Object.keys(TAX_DATA);
+
+            countries.forEach((country, idx) => {
+                const chip = document.createElement('label');
+                chip.className = 'country-chip selected';
+                chip.innerHTML = `
+                    <input type="checkbox" checked data-country="${country}">
+                    <span class="chip-dot" style="background:${LINE_COLORS[idx % LINE_COLORS.length]}"></span>
+                    ${country}
+                `;
+                chip.querySelector('input').addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedCountries.add(country);
+                        chip.classList.add('selected');
+                    } else {
+                        selectedCountries.delete(country);
+                        chip.classList.remove('selected');
+                    }
+                    if (currentView === 'compounding') updateCompoundingChart();
+                });
+                container.appendChild(chip);
+            });
+        }
+
+        function selectAllCountries() {
+            selectedCountries = new Set(Object.keys(TAX_DATA));
+            document.querySelectorAll('.country-chip input').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.country-chip').classList.add('selected');
+            });
+            if (currentView === 'compounding') updateCompoundingChart();
+        }
+
+        function deselectAllCountries() {
+            selectedCountries.clear();
+            document.querySelectorAll('.country-chip input').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.country-chip').classList.remove('selected');
+            });
+            if (currentView === 'compounding') updateCompoundingChart();
+        }
+
         // Initialize
+        initCountrySelector();
         document.getElementById('income').addEventListener('input', calculateResults);
         calculateResults();
     </script>
