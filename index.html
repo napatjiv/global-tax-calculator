@@ -1026,9 +1026,18 @@
 
                 const data = TAX_DATA[country];
                 const takeHomeValues = incomePoints.map(inc => getTakeHomeUSD(inc, data));
-                const effectiveRates = incomePoints.map((inc, i) => {
-                    const rate = inc > 0 ? ((inc - takeHomeValues[i]) / inc * 100).toFixed(1) : '0.0';
-                    return rate;
+                const hoverData = incomePoints.map((inc, i) => {
+                    const effectiveRate = inc > 0 ? ((inc - takeHomeValues[i]) / inc * 100).toFixed(1) : '0.0';
+                    // Find marginal bracket rate for this income
+                    const localIncome = convertToLocalCurrency(inc, data.currency);
+                    let marginalRate = 0;
+                    for (let b = data.brackets.length - 1; b >= 0; b--) {
+                        if (localIncome > data.brackets[b].threshold) {
+                            marginalRate = data.brackets[b].rate;
+                            break;
+                        }
+                    }
+                    return [effectiveRate, (marginalRate * 100).toFixed(1)];
                 });
 
                 traces.push({
@@ -1037,7 +1046,7 @@
                     type: 'scatter',
                     mode: 'lines',
                     name: country,
-                    customdata: effectiveRates,
+                    customdata: hoverData,
                     line: {
                         color: LINE_COLORS[idx % LINE_COLORS.length],
                         width: 2.5
@@ -1045,7 +1054,8 @@
                     hovertemplate: '<b>' + country + '</b><br>' +
                         'Gross: $%{x:,.0f}<br>' +
                         'Take-Home: $%{y:,.0f}<br>' +
-                        'Tax Rate: %{customdata}%<br>' +
+                        'Effective Rate: %{customdata[0]}%<br>' +
+                        'Marginal Bracket: %{customdata[1]}%<br>' +
                         '<extra></extra>'
                 });
             });
