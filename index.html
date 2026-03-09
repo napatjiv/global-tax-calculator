@@ -1026,6 +1026,10 @@
 
                 const data = TAX_DATA[country];
                 const takeHomeValues = incomePoints.map(inc => getTakeHomeUSD(inc, data));
+                const effectiveRates = incomePoints.map((inc, i) => {
+                    const rate = inc > 0 ? ((inc - takeHomeValues[i]) / inc * 100).toFixed(1) : '0.0';
+                    return rate;
+                });
 
                 traces.push({
                     x: incomePoints,
@@ -1033,6 +1037,7 @@
                     type: 'scatter',
                     mode: 'lines',
                     name: country,
+                    customdata: effectiveRates,
                     line: {
                         color: LINE_COLORS[idx % LINE_COLORS.length],
                         width: 2.5
@@ -1040,6 +1045,7 @@
                     hovertemplate: '<b>' + country + '</b><br>' +
                         'Gross: $%{x:,.0f}<br>' +
                         'Take-Home: $%{y:,.0f}<br>' +
+                        'Tax Rate: %{customdata}%<br>' +
                         '<extra></extra>'
                 });
             });
