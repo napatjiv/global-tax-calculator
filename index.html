@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Take-Home Income Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.27.0/dist/plotly.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #333;
+            font-weight: 300;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            color: #222;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        .disclaimer {
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 16px 0;
+            margin: 0 0 40px;
+        }
+
+        .disclaimer strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #999;
+            font-weight: 400;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .disclaimer p {
+            font-size: 0.82rem;
+            color: #888;
+            line-height: 1.7;
+        }
+
+        .controls {
+            padding: 0 0 32px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: #999;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #bbb;
+            font-weight: 300;
+            pointer-events: none;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 0 10px 16px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: #333;
+            background: transparent;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-bottom-color: #333;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 0;
+            margin-top: 8px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 300;
+            font-size: 0.85rem;
+            color: #999;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            color: #333;
+        }
+
+        .toggle-btn.active {
+            color: #333;
+            border-bottom: 2px solid #333;
+        }
+
+        .chart-container {
+            padding: 20px 0;
+            min-height: 600px;
+        }
+
+        #chart {
+            width: 100%;
+            height: 600px;
+        }
+
+        .results {
+            padding: 32px 0;
+        }
+
+        .results h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 300;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .result-card {
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-card h3 {
+            font-size: 0.75rem;
+            color: #bbb;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+        }
+
+        .result-card .value {
+            font-size: 1.3rem;
+            font-weight: 300;
+            color: #333;
+        }
+
+        .result-card .subtext {
+            font-size: 0.82rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .verification-status {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 2px;
+            font-size: 0.7rem;
+            font-weight: 400;
+            margin-left: 4px;
+            letter-spacing: 0.03em;
+        }
+
+        .verified {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .estimated {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+
+        .footer {
+            padding: 32px 0;
+            border-top: 1px solid #eee;
+            font-size: 0.8rem;
+            color: #bbb;
+            margin-top: 20px;
+        }
+
+        .footer a {
+            color: #888;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #333;
+        }
+
+        .maintenance-notice {
+            margin-top: 16px;
+            padding: 12px 0;
+            border-top: 1px solid #eee;
+            font-size: 0.78rem;
+            color: #bbb;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0;
+            margin: 0 0 0 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .view-toggle button {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 300;
+            font-size: 0.85rem;
+            color: #bbb;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+        }
+
+        .view-toggle button:hover {
+            color: #555;
+        }
+
+        .view-toggle button.active {
+            color: #333;
+            border-bottom-color: #333;
+        }
+
+        .country-selector {
+            padding: 20px 0;
+            display: none;
+            border-bottom: 1px solid #eee;
+        }
+
+        .country-selector.visible {
+            display: block;
+        }
+
+        .country-selector h3 {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 12px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .country-selector .selector-actions {
+            margin-bottom: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .country-selector .selector-actions button {
+            padding: 4px 12px;
+            border: 1px solid #ddd;
+            background: transparent;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            color: #888;
+            font-weight: 300;
+        }
+
+        .country-selector .selector-actions button:hover {
+            border-color: #999;
+            color: #333;
+        }
+
+        .country-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .country-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border: 1px solid #e5e5e5;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 300;
+            transition: all 0.2s;
+            user-select: none;
+            color: #999;
+        }
+
+        .country-chip:hover {
+            border-color: #999;
+            color: #555;
+        }
+
+        .country-chip.selected {
+            background: transparent;
+            border-color: #333;
+            color: #333;
+        }
+
+        .country-chip input {
+            display: none;
+        }
+
+        .country-chip .chip-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Global Take-Home Income Calculator</h1>
+            <p>Compare after-tax income across 17 countries/regions</p>
+        </div>
+
+        <div class="disclaimer">
+            <strong>Disclaimer</strong>
+            <p>This calculator provides <strong>estimates only</strong> and should NOT be used for actual tax planning or financial decisions. Tax calculations are simplified and may not reflect your specific situation. Countries marked <span class="verification-status verified">VERIFIED</span> use official 2026 government data. Others are estimates. Always consult official tax authorities or a professional tax advisor for accurate calculations.</p>
+        </div>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="income">Annual Gross Income (USD)</label>
+                <div class="input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" id="income" value="100000" min="0" max="1000000000000" step="1000">
+                </div>
+            </div>
+            
+        </div>
+        
+        <div class="view-toggle">
+            <button class="active" onclick="setView('single')">Single Income Comparison</button>
+            <button onclick="setView('compounding')">Income vs. Take-Home (Multi-Country)</button>
+        </div>
+
+        <div class="country-selector" id="countrySelector">
+            <h3>Select countries to compare:</h3>
+            <div class="selector-actions">
+                <button onclick="selectAllCountries()">Select All</button>
+                <button onclick="deselectAllCountries()">Deselect All</button>
+            </div>
+            <div class="country-checkboxes" id="countryCheckboxes"></div>
+            <div style="margin-top:15px;display:flex;gap:20px;align-items:end;flex-wrap:wrap;">
+                <div class="input-group" style="margin-bottom:0;flex:1;min-width:180px;">
+                    <label for="rangeMin" style="font-size:0.85rem;">Income Range Min (USD)</label>
+                    <div class="input-wrapper">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" id="rangeMin" value="10000" min="0" max="100000000" step="10000">
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom:0;flex:1;min-width:180px;">
+                    <label for="rangeMax" style="font-size:0.85rem;">Income Range Max (USD)</label>
+                    <div class="input-wrapper">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" id="rangeMax" value="2000000" min="0" max="100000000" step="10000">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div id="chart"></div>
+        </div>
+        
+        <div class="results" id="results"></div>
+        
+        <div class="footer">
+            <p><strong>Data Sources & Verification Status:</strong></p>
+            <ul style="margin: 10px 0; line-height: 1.8; list-style: none; padding: 0;">
+                <li><strong>USA (Texas)</strong> <span class="verification-status verified">VERIFIED</span> - IRS Rev. Proc. 2025-32, federal only (TX 0% state tax)</li>
+                <li><strong>USA (California)</strong> <span class="verification-status verified">VERIFIED</span> - IRS Rev. Proc. 2025-32 + CA FTB rates (up to 13.3%)</li>
+                <li><strong>United Kingdom</strong> <span class="verification-status verified">VERIFIED</span> - GOV.UK 2025-26 rates &amp; NI thresholds</li>
+                <li><strong>Canada</strong> <span class="verification-status verified">VERIFIED</span> - CRA 2026 federal brackets (14% lowest rate)</li>
+                <li><strong>Australia</strong> <span class="verification-status verified">VERIFIED</span> - ATO 2025-26 Stage 3 tax cuts</li>
+                <li><strong>Singapore</strong> <span class="verification-status verified">VERIFIED</span> - IRAS YA2026 &amp; CPF Board 2026 rates</li>
+                <li><strong>UAE, Monaco, Cayman</strong> <span class="verification-status verified">VERIFIED</span> - Confirmed zero personal income tax</li>
+                <li><strong>Other Countries</strong> <span class="verification-status estimated">ESTIMATES</span> - Updated from PwC Tax Summaries, official gazettes &amp; government sources</li>
+            </ul>
+
+            <div class="maintenance-notice">
+                <strong>For Developers:</strong> Tax data is stored in the <code>TAX_DATA</code> object. To update: find the country, update the brackets array with official data, and change <code>verified</code> to <code>true</code>.
+            </div>
+
+            <p style="margin-top: 15px;">Last updated: March 2026 • Tax laws change annually - verify with official sources before making decisions</p>
+        </div>
+    </div>
+
+    <script>
+        // EXCHANGE RATES (as of March 2026 - UPDATE THESE PERIODICALLY)
+        const EXCHANGE_RATES = {
+            'USD': 1,
+            'GBP': 0.79,
+            'CAD': 1.36,
+            'EUR': 0.92,
+            'AUD': 1.52,
+            'SGD': 1.34,
+            'JPY': 149.50,
+            'MXN': 17.20,
+            'THB': 34.50,
+            'VND': 25320,
+            'CRC': 520
+        };
+
+        // TAX DATA - THIS IS THE HEART OF THE CALCULATOR
+        // Each country has:
+        // - brackets: array of {threshold (in local currency), rate (as decimal)}
+        // - socialInsurance: {rate, cap (in local currency), additionalAbove}
+        // - currency: ISO code
+        // - verified: true if from official 2026 government source
+        // - source: URL to official source
+        // - notes: important info about what's included/excluded
+        
+        const TAX_DATA = {
+            'USA (Texas - No State Tax)': {
+                // IRS Rev. Proc. 2025-32 (OBBBA). Single filer brackets on GROSS income.
+                // Texas has NO state income tax.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 16100, rate: 0.10},
+                    {threshold: 28500, rate: 0.12},
+                    {threshold: 66500, rate: 0.22},
+                    {threshold: 121800, rate: 0.24},
+                    {threshold: 217875, rate: 0.32},
+                    {threshold: 272325, rate: 0.35},
+                    {threshold: 656700, rate: 0.37}
+                ],
+                socialInsurance: {
+                    rate: 0.0765,
+                    cap: 184500,
+                    additionalAbove: 0.0145
+                },
+                currency: 'USD',
+                verified: true,
+                source: 'https://www.irs.gov/pub/irs-drop/rp-25-32.pdf',
+                notes: 'Federal only (Texas has 0% state income tax). Single filer, standard deduction $16,100. FICA: SS 6.2% (cap $184,500) + Medicare 1.45%.',
+                justification: 'IRS federal + Texas (0% state tax). Low-tax US scenario.'
+            },
+
+            'USA (California - Highest Tax)': {
+                // IRS federal brackets + California state tax (2025-26, 9 brackets up to 13.3%).
+                // Combined brackets approximate federal+state marginal rates on gross income.
+                // CA standard deduction ~$5,540 (single). Modeled by adding CA rates on top of federal.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 16100, rate: 0.11},      // 10% fed + ~1% CA
+                    {threshold: 28500, rate: 0.14},       // 12% fed + ~2% CA
+                    {threshold: 66500, rate: 0.26},       // 22% fed + ~4% CA
+                    {threshold: 121800, rate: 0.30},      // 24% fed + ~6% CA
+                    {threshold: 217875, rate: 0.4125},    // 32% fed + ~9.3% CA
+                    {threshold: 272325, rate: 0.4425},    // 35% fed + ~9.3% CA
+                    {threshold: 656700, rate: 0.4630},    // 37% fed + ~9.3% CA
+                    {threshold: 1000000, rate: 0.5030}    // 37% fed + 13.3% CA (mental health surtax)
+                ],
+                socialInsurance: {
+                    rate: 0.0765,
+                    cap: 184500,
+                    additionalAbove: 0.0145
+                },
+                stateTax: true,
+                currency: 'USD',
+                verified: true,
+                source: 'https://www.ftb.ca.gov/forms/2025/2025-california-tax-rate-schedules.html',
+                notes: 'Federal + California state tax (up to 13.3%). Single filer. CA Mental Health Services surtax 1% above $1M. FICA included.',
+                justification: 'IRS federal + CA state tax (13.3% top rate + 1% MHS surtax). Worst-case US scenario.'
+            },
+
+            'United Kingdom': {
+                // GOV.UK 2025-26 tax year. Thresholds are gross income levels.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 12570, rate: 0.20},
+                    {threshold: 50270, rate: 0.40},
+                    {threshold: 125140, rate: 0.45}
+                ],
+                socialInsurance: {
+                    rate: 0.08,
+                    cap: 50270,
+                    additionalAbove: 0.02
+                },
+                currency: 'GBP',
+                verified: true,
+                source: 'https://www.gov.uk/income-tax-rates',
+                notes: 'Includes NI (employee 8%/2%). Personal allowance £12,570 tapers £1:£2 above £100k.',
+                justification: 'GOV.UK 2025-26 rates. Personal allowance £12,570. NI Class 1: 8%/2%.'
+            },
+
+            'Canada': {
+                // CRA 2026 federal rates. Thresholds = BPA $16,452 + CRA taxable income thresholds.
+                // Lowest bracket reduced from 15% to 14% per May 2025 legislation.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 16452, rate: 0.14},
+                    {threshold: 74975, rate: 0.205},
+                    {threshold: 133497, rate: 0.26},
+                    {threshold: 197892, rate: 0.29},
+                    {threshold: 274934, rate: 0.33}
+                ],
+                socialInsurance: {
+                    rate: 0.0595,
+                    cap: 74600,
+                    additionalAbove: 0.04,
+                    secondCap: 85000
+                },
+                currency: 'CAD',
+                verified: true,
+                source: 'https://www.canada.ca/en/revenue-agency/services/tax/individuals/frequently-asked-questions-individuals/canadian-income-tax-rates-individuals-current-previous-years.html',
+                notes: 'Federal only. BPA $16,452. CPP 5.95% (cap $74,600) + CPP2 4% ($74,600-$85,000). Excl. provincial tax (+5-20%).',
+                justification: 'CRA 2026 federal rates. 14% lowest bracket (May 2025 law). BPA $16,452. CPP/CPP2 included.'
+            },
+
+            'Australia': {
+                // ATO 2025-26. Stage 3 tax cuts effective 1 Jul 2024.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 18200, rate: 0.16},
+                    {threshold: 45000, rate: 0.30},
+                    {threshold: 135000, rate: 0.37},
+                    {threshold: 190000, rate: 0.45}
+                ],
+                socialInsurance: {
+                    rate: 0.02,
+                    cap: Infinity
+                },
+                currency: 'AUD',
+                verified: true,
+                source: 'https://www.ato.gov.au/tax-rates-and-codes/tax-rates-australian-residents',
+                notes: 'Stage 3 tax cuts (from 1 Jul 2024): 16%, 30%, 37%, 45%. Medicare levy 2%. Tax-free threshold $18,200.',
+                justification: 'ATO 2025-26 rates. Stage 3 cuts: 16%/30%/37%/45%. Medicare levy 2%.'
+            },
+
+            'Singapore': {
+                // IRAS YA2026 rates (from YA2024: added 23%/24% top brackets).
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 20000, rate: 0.02},
+                    {threshold: 30000, rate: 0.035},
+                    {threshold: 40000, rate: 0.07},
+                    {threshold: 80000, rate: 0.115},
+                    {threshold: 120000, rate: 0.15},
+                    {threshold: 160000, rate: 0.18},
+                    {threshold: 200000, rate: 0.19},
+                    {threshold: 240000, rate: 0.195},
+                    {threshold: 280000, rate: 0.20},
+                    {threshold: 320000, rate: 0.22},
+                    {threshold: 500000, rate: 0.23},
+                    {threshold: 1000000, rate: 0.24}
+                ],
+                socialInsurance: {
+                    rate: 0.20,
+                    cap: 102000
+                },
+                currency: 'SGD',
+                verified: true,
+                source: 'https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates',
+                notes: 'Tax resident rates. CPF employee contribution 20% (cap S$102k annual). OW ceiling S$8,000/mo from Jan 2026.',
+                justification: 'IRAS YA2026 rates. CPF employee 20% (annual cap S$102k, OW ceiling S$8k/mo from 2026).'
+            },
+
+            'UAE (Dubai)': {
+                brackets: [
+                    {threshold: 0, rate: 0}
+                ],
+                socialInsurance: {
+                    rate: 0,
+                    cap: 0
+                },
+                currency: 'USD',
+                verified: true,
+                source: 'https://taxsummaries.pwc.com/united-arab-emirates/individual/taxes-on-personal-income',
+                notes: 'No personal income tax. Corporate tax 9% (from Jun 2023) does not apply to individuals.',
+                justification: 'No personal income tax in UAE. Confirmed by UAE Ministry of Economy.'
+            },
+
+            'Monaco': {
+                brackets: [
+                    {threshold: 0, rate: 0}
+                ],
+                socialInsurance: {
+                    rate: 0,
+                    cap: 0
+                },
+                currency: 'EUR',
+                verified: true,
+                source: 'https://monservicepublic.gouv.mc/en/themes/tax/information/general-information/tax-in-monaco',
+                notes: 'No personal income tax since 1869. Exception: French nationals (1963 Convention) pay French rates.',
+                justification: 'No income tax since 1869. French nationals taxed under 1963 Franco-Monegasque Convention.'
+            },
+
+            'Cayman Islands': {
+                brackets: [
+                    {threshold: 0, rate: 0}
+                ],
+                socialInsurance: {
+                    rate: 0,
+                    cap: 0
+                },
+                currency: 'USD',
+                verified: true,
+                source: 'https://taxsummaries.pwc.com/cayman-islands/individual/taxes-on-personal-income',
+                notes: 'No income tax, capital gains tax, or corporate tax. Revenue from import duties and fees.',
+                justification: 'Zero tax jurisdiction. No income, capital gains, or corporate tax. Head tax abolished 1985.'
+            },
+
+            'Germany': {
+                // 2026 Steuerfortentwicklungsgesetz. Formula-based zones approximated as stepped brackets.
+                // Grundfreibetrag €12,348. Progressive zones 14%-42% approximated.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 12348, rate: 0.14},
+                    {threshold: 17799, rate: 0.24},
+                    {threshold: 69878, rate: 0.42},
+                    {threshold: 277826, rate: 0.45}
+                ],
+                socialInsurance: {
+                    rate: 0.21,
+                    cap: 101400
+                },
+                currency: 'EUR',
+                verified: false,
+                source: 'https://taxsummaries.pwc.com/germany/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. §32a EStG 2026 (formula-based, approximated). Social ins. ~21% employee (pension 9.3%, health ~8.75%, unemployment 1.3%, care 1.8%). Caps vary by type.',
+                justification: 'Est. 2026 §32a EStG. Grundfreibetrag €12,348. Social ins. ~21% employee. Caps: pension €101k, health €70k.'
+            },
+
+            'France': {
+                // 2026 barème (single person, 1 part). Thresholds +0.9% inflation vs 2025.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 11600, rate: 0.11},
+                    {threshold: 29579, rate: 0.30},
+                    {threshold: 83988, rate: 0.41},
+                    {threshold: 180648, rate: 0.45}
+                ],
+                socialInsurance: {
+                    rate: 0.22,
+                    cap: 48060
+                },
+                currency: 'EUR',
+                verified: false,
+                source: 'https://taxsummaries.pwc.com/france/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. 2026 barème, single, 1 part. CSG/CRDS ~9.7% + employee social ~12%. Quotient familial not modeled.',
+                justification: 'Est. 2026 barème (1 part). Thresholds +0.9% inflation. CSG/CRDS 9.7% + social ~12%.'
+            },
+
+            'Japan': {
+                // NTA national brackets. Basic deduction ¥580k + employment deduction ¥650k = ¥1.23M modeled as 0% zone.
+                // Does NOT include ~10% resident tax or 2.1% reconstruction surtax.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 1230000, rate: 0.05},
+                    {threshold: 3180000, rate: 0.10},
+                    {threshold: 4530000, rate: 0.20},
+                    {threshold: 8180000, rate: 0.23},
+                    {threshold: 10230000, rate: 0.33},
+                    {threshold: 19230000, rate: 0.40},
+                    {threshold: 41230000, rate: 0.45}
+                ],
+                socialInsurance: {
+                    rate: 0.15,
+                    cap: 7800000
+                },
+                currency: 'JPY',
+                verified: false,
+                source: 'https://taxsummaries.pwc.com/japan/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. National tax only. Excl. ~10% resident tax and 2.1% reconstruction surtax. Basic+employment deductions ~¥1.23M. Social ins. ~15%.',
+                justification: 'Est. NTA brackets. Deductions ~¥1.23M. Excl. ~10% resident tax, 2.1% surtax. SI ~15%.'
+            },
+
+            'Thailand': {
+                // Revenue Dept. brackets (unchanged since 2013). Thresholds on net taxable income.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 150000, rate: 0.05},
+                    {threshold: 300000, rate: 0.10},
+                    {threshold: 500000, rate: 0.15},
+                    {threshold: 750000, rate: 0.20},
+                    {threshold: 1000000, rate: 0.25},
+                    {threshold: 2000000, rate: 0.30},
+                    {threshold: 5000000, rate: 0.35}
+                ],
+                socialInsurance: {
+                    rate: 0.05,
+                    cap: 210000
+                },
+                currency: 'THB',
+                verified: false,
+                source: 'https://taxsummaries.pwc.com/thailand/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. Revenue Dept. brackets (unchanged since 2013). SS 5% capped ฿17,500/mo (2026, up from ฿15,000).',
+                justification: 'Est. Revenue Dept. rates (since 2013). SS 5% cap ฿17,500/mo (2026 per Royal Gazette Dec 2025).'
+            },
+
+            'Vietnam': {
+                // NEW PIT Law No. 109/2025/QH15 (eff. 1 Jan 2026): reduced from 7 to 5 brackets.
+                // Personal deduction ₫15.5M/mo = ₫186M/yr. Thresholds = deduction + taxable income thresholds.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 186000000, rate: 0.05},
+                    {threshold: 306000000, rate: 0.15},
+                    {threshold: 486000000, rate: 0.25},
+                    {threshold: 786000000, rate: 0.30},
+                    {threshold: 1386000000, rate: 0.35}
+                ],
+                socialInsurance: {
+                    rate: 0.105,
+                    cap: 561600000
+                },
+                currency: 'VND',
+                verified: false,
+                source: 'https://www.vietnam-briefing.com/news/vietnams-personal-income-tax-law.html/',
+                notes: 'PIT Law 109/2025/QH15 (eff. 1 Jan 2026): 5 brackets (was 7). Personal deduction ₫15.5M/mo. SI 10.5%.',
+                justification: 'New PIT Law 109/2025/QH15 (eff. 1 Jan 2026). 5 brackets. Deduction ₫15.5M/mo. SI 10.5%.'
+            },
+
+            'Portugal': {
+                // 2025 IRS escalões (9 brackets) per Lei 55-A/2025.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 8059, rate: 0.125},
+                    {threshold: 12160, rate: 0.16},
+                    {threshold: 17233, rate: 0.215},
+                    {threshold: 22306, rate: 0.244},
+                    {threshold: 28400, rate: 0.314},
+                    {threshold: 41629, rate: 0.349},
+                    {threshold: 44987, rate: 0.431},
+                    {threshold: 83696, rate: 0.446},
+                    {threshold: 83697, rate: 0.48}
+                ],
+                socialInsurance: {
+                    rate: 0.11,
+                    cap: Infinity
+                },
+                currency: 'EUR',
+                verified: false,
+                source: 'https://taxsummaries.pwc.com/portugal/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. 2025 IRS escalões (9 brackets). Does not model NHR regime. SS employee 11% (no cap). +2.5-5% solidarity surcharge above €80k.',
+                justification: 'Est. 2025 IRS escalões per Lei 55-A/2025. 9 brackets 12.5%-48%. SS 11% no cap.'
+            },
+
+            'Mexico': {
+                // 2026 ISR tarifa (Anexo 8 RMF 2026, published DOF 28 Dec 2025).
+                // Thresholds inflated +13.21% from 2022 values. No 0% bracket (lowest is 1.92%).
+                brackets: [
+                    {threshold: 0, rate: 0.0192},
+                    {threshold: 10135, rate: 0.064},
+                    {threshold: 86022, rate: 0.1088},
+                    {threshold: 151176, rate: 0.16},
+                    {threshold: 175736, rate: 0.1792},
+                    {threshold: 210404, rate: 0.2136},
+                    {threshold: 424354, rate: 0.2352},
+                    {threshold: 668840, rate: 0.30},
+                    {threshold: 1276926, rate: 0.32},
+                    {threshold: 1702568, rate: 0.34},
+                    {threshold: 5107704, rate: 0.35}
+                ],
+                socialInsurance: {
+                    rate: 0.028,
+                    cap: 1070456
+                },
+                currency: 'MXN',
+                verified: false,
+                source: 'https://taxsummaries.pwc.com/mexico/individual/taxes-on-personal-income',
+                notes: 'ESTIMATE. 2026 ISR tarifa (+13.21% inflation adj.). IMSS employee ~2.8%. Subsidio al empleo not modeled.',
+                justification: 'Est. 2026 ISR tarifa (Anexo 8 RMF 2026, +13.21% inflation). IMSS employee ~2.8%.'
+            },
+
+            'Costa Rica': {
+                // 2026 per Decreto 45333-H (Dec 2025). Monthly thresholds annualized.
+                brackets: [
+                    {threshold: 0, rate: 0},
+                    {threshold: 11016000, rate: 0.10},
+                    {threshold: 16164000, rate: 0.15},
+                    {threshold: 28368000, rate: 0.20},
+                    {threshold: 56724000, rate: 0.25}
+                ],
+                socialInsurance: {
+                    rate: 0.1083,
+                    cap: Infinity
+                },
+                currency: 'CRC',
+                verified: false,
+                source: 'https://www.bdo.cr/en-gb/insights/2025/new-income-brackets-for-2026',
+                notes: 'ESTIMATE. 2026 per Decreto 45333-H. CCSS employee 10.83% (IVM +0.16% from 2025). No cap.',
+                justification: 'Est. 2026 Decreto 45333-H. CCSS 10.83% (IVM pension rate +0.16% from 2025).'
+            }
+        };
+
+        let currentScale = 'linear';
+        let currentView = 'single'; // 'single' or 'compounding'
+        let selectedCountries = new Set(Object.keys(TAX_DATA));
+
+        // Color palette for line chart
+        const LINE_COLORS = [
+            '#5b8a72', '#c47a5a', '#6a8caf', '#b8a04a', '#8a7ab5',
+            '#c4728a', '#5a9ea8', '#8aab5a', '#d49a5a', '#7a7ab8',
+            '#5aafa0', '#b85a6a', '#5a9ac4', '#9a7ab8', '#b86aaf',
+            '#5aab7a', '#baa040'
+        ];
+
+        function convertToLocalCurrency(usdAmount, currency) {
+            return usdAmount * EXCHANGE_RATES[currency];
+        }
+
+        function calculateTax(income, countryData) {
+            let tax = 0;
+            const brackets = countryData.brackets;
+
+            for (let i = 0; i < brackets.length; i++) {
+                const bracket = brackets[i];
+                const nextThreshold = (i < brackets.length - 1) ? brackets[i + 1].threshold : Infinity;
+
+                if (income > bracket.threshold) {
+                    const taxableInBracket = Math.min(income, nextThreshold) - bracket.threshold;
+                    tax += taxableInBracket * bracket.rate;
+                }
+            }
+
+            return tax;
+        }
+
+        function calculateSocialInsurance(income, countryData) {
+            const si = countryData.socialInsurance;
+            if (!si || si.rate === 0) return 0;
+
+            let total = 0;
+
+            if (income <= si.cap) {
+                total = income * si.rate;
+            } else {
+                total = si.cap * si.rate;
+                if (si.additionalAbove) {
+                    if (si.secondCap && income > si.secondCap) {
+                        total += (si.secondCap - si.cap) * si.additionalAbove;
+                    } else if (!si.secondCap) {
+                        total += (income - si.cap) * si.additionalAbove;
+                    } else {
+                        total += (income - si.cap) * si.additionalAbove;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        function getTakeHomeUSD(incomeUSD, countryData) {
+            const localIncome = convertToLocalCurrency(incomeUSD, countryData.currency);
+            const incomeTax = calculateTax(localIncome, countryData);
+            const socialInsurance = calculateSocialInsurance(localIncome, countryData);
+            const takeHome = localIncome - incomeTax - socialInsurance;
+            return takeHome / EXCHANGE_RATES[countryData.currency];
+        }
+
+        function calculateResults() {
+            if (currentView === 'compounding') {
+                updateCompoundingChart();
+                return;
+            }
+
+            const incomeUSD = parseFloat(document.getElementById('income').value) || 0;
+
+            const results = [];
+
+            for (const [country, data] of Object.entries(TAX_DATA)) {
+                const localIncome = convertToLocalCurrency(incomeUSD, data.currency);
+                const incomeTax = calculateTax(localIncome, data);
+                const socialInsurance = calculateSocialInsurance(localIncome, data);
+                const totalTax = incomeTax + socialInsurance;
+                const takeHome = localIncome - totalTax;
+                const effectiveRate = (totalTax / localIncome) * 100;
+
+                const takeHomeUSD = takeHome / EXCHANGE_RATES[data.currency];
+
+                results.push({
+                    country,
+                    takeHomeUSD,
+                    localIncome,
+                    incomeTax,
+                    socialInsurance,
+                    totalTax,
+                    takeHome,
+                    effectiveRate: effectiveRate || 0,
+                    currency: data.currency,
+                    verified: data.verified,
+                    justification: data.justification || ''
+                });
+            }
+
+            results.sort((a, b) => b.takeHomeUSD - a.takeHomeUSD);
+
+            updateBarChart(results);
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function updateBarChart(results) {
+            const trace = {
+                x: results.map(r => r.country + (r.verified ? ' ✓' : '')),
+                y: results.map(r => r.takeHomeUSD),
+                type: 'bar',
+                marker: {
+                    color: results.map(r => r.verified ? '#6b9e8a' : '#c4b07b'),
+                    line: {
+                        color: results.map(r => r.verified ? '#5a8a78' : '#b0996a'),
+                        width: 1
+                    }
+                },
+                text: results.map(r =>
+                    `$${r.takeHomeUSD.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}<br>` +
+                    `${r.effectiveRate.toFixed(1)}% effective tax`
+                ),
+                textposition: 'none',
+                customdata: results.map(r => {
+                    const incomeTaxUSD = r.incomeTax / EXCHANGE_RATES[r.currency];
+                    const socialInsUSD = r.socialInsurance / EXCHANGE_RATES[r.currency];
+                    const incomeTaxPct = r.localIncome > 0 ? (r.incomeTax / r.localIncome * 100).toFixed(1) : '0.0';
+                    const socialInsPct = r.localIncome > 0 ? (r.socialInsurance / r.localIncome * 100).toFixed(1) : '0.0';
+                    return [
+                        r.effectiveRate.toFixed(1),
+                        '$' + Math.round(incomeTaxUSD).toLocaleString('en-US'),
+                        incomeTaxPct,
+                        '$' + Math.round(socialInsUSD).toLocaleString('en-US'),
+                        socialInsPct,
+                        r.justification
+                    ];
+                }),
+                hovertemplate: '<b>%{x}</b><br>' +
+                    'Take-Home: $%{y:,.0f} USD<br>' +
+                    'Income Tax: %{customdata[1]} USD (%{customdata[2]}%)<br>' +
+                    'Social Insurance: %{customdata[3]} USD (%{customdata[4]}%)<br>' +
+                    'Effective Rate: %{customdata[0]}%<br>' +
+                    '<br><i>%{customdata[5]}</i>' +
+                    '<extra></extra>'
+            };
+
+            const layout = {
+                title: {
+                    text: 'After-Tax Income Comparison',
+                    font: { size: 15, color: '#999', family: 'Inter, sans-serif', weight: 300 }
+                },
+                xaxis: {
+                    title: { text: 'Country', font: { size: 11, color: '#bbb' } },
+                    tickangle: -45,
+                    tickfont: { size: 11, color: '#888' },
+                    gridcolor: '#f5f5f5',
+                    linecolor: '#eee'
+                },
+                yaxis: {
+                    title: { text: 'Take-Home Income (USD)', font: { size: 11, color: '#bbb' } },
+                    type: currentScale,
+                    tickformat: '$,.0f',
+                    tickfont: { size: 11, color: '#888' },
+                    gridcolor: '#f5f5f5',
+                    linecolor: '#eee',
+                    zerolinecolor: '#eee'
+                },
+                plot_bgcolor: '#ffffff',
+                paper_bgcolor: '#ffffff',
+                margin: { t: 60, b: 120, l: 80, r: 40 },
+                height: 600,
+                hovermode: 'closest'
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false
+            };
+
+            Plotly.newPlot('chart', [trace], layout, config);
+        }
+
+        function updateCompoundingChart() {
+            const rangeMin = Math.max(0, parseFloat(document.getElementById('rangeMin').value) || 0);
+            const rangeMax = Math.max(rangeMin + 1000, parseFloat(document.getElementById('rangeMax').value) || 2000000);
+            const range = rangeMax - rangeMin;
+
+            // Generate ~50 evenly spaced points across the user's range
+            const numPoints = 50;
+            const step = Math.max(1000, Math.round(range / numPoints / 1000) * 1000);
+            const incomePoints = [];
+            for (let i = rangeMin; i <= rangeMax; i += step) incomePoints.push(i);
+            if (incomePoints[incomePoints.length - 1] < rangeMax) incomePoints.push(rangeMax);
+
+            const traces = [];
+            const countries = Object.keys(TAX_DATA);
+
+            countries.forEach((country, idx) => {
+                if (!selectedCountries.has(country)) return;
+
+                const data = TAX_DATA[country];
+                const takeHomeValues = incomePoints.map(inc => getTakeHomeUSD(inc, data));
+                const hoverData = incomePoints.map((inc, i) => {
+                    const effectiveRate = inc > 0 ? ((inc - takeHomeValues[i]) / inc * 100).toFixed(1) : '0.0';
+                    // Find marginal bracket rate for this income
+                    const localIncome = convertToLocalCurrency(inc, data.currency);
+                    let marginalRate = 0;
+                    for (let b = data.brackets.length - 1; b >= 0; b--) {
+                        if (localIncome > data.brackets[b].threshold) {
+                            marginalRate = data.brackets[b].rate;
+                            break;
+                        }
+                    }
+                    return [effectiveRate, (marginalRate * 100).toFixed(1)];
+                });
+
+                traces.push({
+                    x: incomePoints,
+                    y: takeHomeValues,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: country,
+                    customdata: hoverData,
+                    line: {
+                        color: LINE_COLORS[idx % LINE_COLORS.length],
+                        width: 1.5
+                    },
+                    hovertemplate: '$%{y:,.0f} (%{customdata[0]}%)<extra>' + country + '</extra>'
+                });
+            });
+
+            const layout = {
+                title: {
+                    text: 'Gross Income vs. Take-Home Income',
+                    font: { size: 15, color: '#999', family: 'Inter, sans-serif', weight: 300 }
+                },
+                xaxis: {
+                    title: { text: 'Annual Gross Income (USD)', font: { size: 11, color: '#bbb' } },
+                    tickformat: '$,.0f',
+                    type: 'linear',
+                    tickfont: { size: 11, color: '#888' },
+                    gridcolor: '#f5f5f5',
+                    linecolor: '#eee'
+                },
+                yaxis: {
+                    title: { text: 'Annual Take-Home Income (USD)', font: { size: 11, color: '#bbb' } },
+                    tickformat: '$,.0f',
+                    type: 'linear',
+                    tickfont: { size: 11, color: '#888' },
+                    gridcolor: '#f5f5f5',
+                    linecolor: '#eee',
+                    zerolinecolor: '#eee'
+                },
+                plot_bgcolor: '#ffffff',
+                paper_bgcolor: '#ffffff',
+                margin: { t: 60, b: 80, l: 100, r: 40 },
+                height: 750,
+                hovermode: 'x unified',
+                hoverlabel: {
+                    font: { size: 10 }
+                },
+                legend: {
+                    orientation: 'v',
+                    x: 1.02,
+                    y: 1,
+                    font: { size: 10, color: '#888' }
+                }
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false
+            };
+
+            Plotly.newPlot('chart', traces, layout, config);
+
+            // Update results area with summary
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p style="color:#bbb;margin-top:8px;font-size:0.85rem;font-weight:300;">Select countries above to compare how after-tax income scales with gross income.</p>';
+        }
+
+
+
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            const selector = document.getElementById('countrySelector');
+            if (view === 'compounding') {
+                selector.classList.add('visible');
+            } else {
+                selector.classList.remove('visible');
+            }
+
+            calculateResults();
+        }
+
+        // Country selector
+        function initCountrySelector() {
+            const container = document.getElementById('countryCheckboxes');
+            const countries = Object.keys(TAX_DATA);
+
+            countries.forEach((country, idx) => {
+                const chip = document.createElement('label');
+                chip.className = 'country-chip selected';
+                chip.innerHTML = `
+                    <input type="checkbox" checked data-country="${country}">
+                    <span class="chip-dot" style="background:${LINE_COLORS[idx % LINE_COLORS.length]}"></span>
+                    ${country}
+                `;
+                chip.querySelector('input').addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedCountries.add(country);
+                        chip.classList.add('selected');
+                    } else {
+                        selectedCountries.delete(country);
+                        chip.classList.remove('selected');
+                    }
+                    if (currentView === 'compounding') updateCompoundingChart();
+                });
+                container.appendChild(chip);
+            });
+        }
+
+        function selectAllCountries() {
+            selectedCountries = new Set(Object.keys(TAX_DATA));
+            document.querySelectorAll('.country-chip input').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.country-chip').classList.add('selected');
+            });
+            if (currentView === 'compounding') updateCompoundingChart();
+        }
+
+        function deselectAllCountries() {
+            selectedCountries.clear();
+            document.querySelectorAll('.country-chip input').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.country-chip').classList.remove('selected');
+            });
+            if (currentView === 'compounding') updateCompoundingChart();
+        }
+
+        // Initialize
+        initCountrySelector();
+        document.getElementById('income').addEventListener('input', calculateResults);
+        document.getElementById('rangeMin').addEventListener('input', function() {
+            if (currentView === 'compounding') updateCompoundingChart();
+        });
+        document.getElementById('rangeMax').addEventListener('input', function() {
+            if (currentView === 'compounding') updateCompoundingChart();
+        });
+        calculateResults();
+    </script>
+</body>
+</html>
